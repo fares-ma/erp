@@ -1,177 +1,148 @@
-
 <div align="center">
-    <a href="https://frappe.io/erpnext">
-	<img src="./erpnext/public/images/v16/erpnext.svg" alt="ERPNext Logo" height="80px" width="80px"/>
-    </a>
-    <h2>ERPNext</h2>
-    <div align="center">
-        <p>Powerful, Intuitive and Open-Source ERP</p>
-    </div>
-
-[![Learn on Frappe School](https://img.shields.io/badge/Frappe%20School-Learn%20ERPNext-blue?style=flat-square)](https://frappe.school)<br><br>
-[![CI](https://github.com/frappe/erpnext/actions/workflows/server-tests-mariadb.yml/badge.svg?event=schedule)](https://github.com/frappe/erpnext/actions/workflows/server-tests-mariadb.yml)
-[![docker pulls](https://img.shields.io/docker/pulls/frappe/erpnext.svg)](https://hub.docker.com/r/frappe/erpnext)
-
+  <img src="./erpnext/public/images/v16/erpnext.svg" alt="ERPNext Logo" height="80" width="80" />
+  <h1>نظام إدارة موارد المؤسسة (ERPNext)</h1>
+  <p>بيئة العمل الكاملة لتشغيل وتخصيص وتجربة <strong>ERPNext v16</strong> محلياً عبر Docker مع سكريبتات البيانات التجريبية وأدلة التحليل والتنفيذ.</p>
 </div>
 
-<div align="center">
-	<img src="./erpnext/public/images/v16/hero_image.png" alt="ERPNext Hero Image"/>
-</div>
+---
 
-<div align="center">
-	<a href="https://erpnext-demo.frappe.cloud/api/method/erpnext_demo.erpnext_demo.auth.login_demo">Live Demo</a>
-	-
-	<a href="https://frappe.io/erpnext">Website</a>
-	-
-	<a href="https://docs.frappe.io/erpnext/">Documentation</a>
-</div>
+## نبذة عن المشروع
 
-## ERPNext
+يضم هذا المستودع بيئة متكاملة لتشغيل نظام **ERPNext** محلياً وتجهيزه للعرض أو التحليل والتنفيذ الفعلي، ويشمل:
 
-100% Open-Source ERP System to help you run your business.
+- **نواة النظام (`erpnext/`):** الكود المصدري لـ ERPNext مع واجهات `islands/` وتطبيق/ملفات `banking/`.
+- **بيئة التشغيل الجاهزة (`frappe_docker/`):** ملفات Docker Compose لتشغيل الموقع وقاعدة البيانات وRedis محلياً بدون إعداد يدوي معقد.
+- **سكريبتات تشغيل سريعة لنظام ويندوز:** لتشغيل Docker Desktop وسحب الصور وتشغيل الحاويات والتحقق من جاهزية الموقع تلقائياً.
+- **سكريبتات تعبئة البيانات التجريبية (`Seed Data`):** لإنشاء دورات عمل كاملة جاهزة للعرض أو لاختبار دورة تصنيع مصنع أجهزة منزلية (بوتاجازات وثلاجات).
+- **أدلة عمل عربية متكاملة:** شرح أقسام النظام من منظور الأعمال، وخارطة التحليل والتنفيذ لمصانع الأجهزة المنزلية.
 
-### Motivation
+---
 
-Running a business is a complex task - handling invoices, tracking stock, managing personnel, and other daily operations. In a market where software is sold separately to manage each of these tasks, ERPNext does all of the above and more, for free.
+## محتويات المستودع (هيكل المشروع)
 
-### Key Features
+| الملف / المجلد | الوصف |
+| :--- | :--- |
+| [`start-erpnext.ps1`](./start-erpnext.ps1) | سكريبت PowerShell لتشغيل Docker Desktop وسحب الصور وبدء الحاويات والتحقق من `http://localhost:8080`. |
+| [`run-erpnext-window.cmd`](./run-erpnext-window.cmd) | ملف تشغيل سريع لنظام ويندوز يفتح نافذة PowerShell لتنفيذ `start-erpnext.ps1`. |
+| [`frappe_docker/pwd.yml`](./frappe_docker/pwd.yml) | ملف `Docker Compose` المحلي لتشغيل خدمات ERPNext (`backend`, `frontend`, `db`, `redis`, `websocket`, وغيرها). |
+| [`seed_demo_data.py`](./seed_demo_data.py) | سكريبت إنشاء بيانات تجريبية عامة (موردون، عملاء، أصناف، دورة بيع وشراء، مدفوعات، CRM، ومشروع ومهام). |
+| [`seed_appliance_factory.py`](./seed_appliance_factory.py) | سكريبت محاكاة دورة تصنيع كاملة لمصنع بوتاجازات وثلاجات (مخازن، قوائم مواد BOM، أوامر تشغيل، هالك، تسليم بالسيريال، وضمان). |
+| [`SYSTEM_OVERVIEW.md`](./SYSTEM_OVERVIEW.md) | الدليل التعريفي الشامل لأقسام ووحدات النظام الـ 12 ورحلات العمل المتكاملة باللغة العربية. |
+| [`FACTORY_DISCOVERY_CHECKLIST.md`](./FACTORY_DISCOVERY_CHECKLIST.md) | دليل التحليل (`Discovery Checklist`) ومصفوفة التعديلات وخطة التنفيذ لمصنع البوتاجازات والثلاجات. |
+| `erpnext/` / `banking/` / `islands/` | الكود المصدري الأساسي لوحدات ERPNext وواجهات المشاريع والربط البنكي. |
 
-- **Accounting**: All the tools you need to manage cash flow in one place, right from recording transactions to summarizing and analyzing financial reports.
-- **Order Management**: Track inventory levels, replenish stock, and manage sales orders, customers, suppliers, shipments, deliverables, and order fulfillment.
-- **Manufacturing**: Simplifies the production cycle, helps track material consumption, exhibits capacity planning, handles subcontracting, and more!
-- **Asset Management**: From purchase to disposal, IT infrastructure to equipment. Covers every branch of your organization, all in one centralized system.
-- **Projects**: Deliver both internal and external projects on time, budget and profitability. Track tasks, timesheets, and issues by project.
+---
 
-<details open>
+## المتطلبات الأساسية
 
-<summary>More</summary>
-	<img src="https://erpnext.com/files/v16_bom.png"/>
-	<img src="https://erpnext.com/files/v16_stock_summary.png"/>
-	<img src="https://erpnext.com/files/v16_job_card.png"/>
-	<img src="https://erpnext.com/files/v16_tasks.png"/>
-</details>
+- [Docker Desktop](https://docs.docker.com/get-docker/) (مع **Docker Compose v2**).
+- [Git](https://git-scm.com/).
 
-### Under the Hood
+---
 
-- [**Frappe Framework**](https://github.com/frappe/frappe): A full-stack web application framework written in Python and JavaScript. The framework provides a robust foundation for building web applications, including a database abstraction layer, user authentication, and a REST API.
+## التشغيل السريع
 
-- [**Frappe UI**](https://github.com/frappe/frappe-ui): A Vue-based UI library, to provide a modern user interface. The Frappe UI library provides a variety of components that can be used to build single-page applications on top of the Frappe Framework.
+### الطريقة الأولى: عبر سكريبت ويندوز (موصى بها على Windows)
 
-## Production Setup
+من داخل مجلد المشروع، شغّل الأمر التالي في PowerShell:
 
-### Managed Hosting
+```powershell
+.\start-erpnext.ps1
+```
 
-You can try [Frappe Cloud](https://frappecloud.com), a simple, user-friendly, and sophisticated [open-source](https://github.com/frappe/press) platform to host Frappe applications reliably and securely.
+يقوم السكريبت تلقائياً بالآتي:
+1. التحقق من تشغيل Docker (وتشغيل Docker Desktop تلقائياً إذا لم يكن يعمل).
+2. سحب الصور المطلوبة (`redis:6.2-alpine`، `mariadb:11.8`، `frappe/erpnext:v16.60.0`) عند الحاجة.
+3. تشغيل الحاويات عبر `frappe_docker/pwd.yml`.
+4. متابعة سجلات إنشاء الموقع (`create-site`) والتحقق من استجابة الرابط `http://localhost:8080/api/method/ping`.
 
-It handles installation, setup, upgrades, monitoring, maintenance, and support of your Frappe deployments. It is a fully featured developer platform with an ability to manage and control multiple Frappe deployments.
+> **ملاحظة:** في حال استخدام [`run-erpnext-window.cmd`](./run-erpnext-window.cmd) بعد نسخ المستودع لمسار جديد، حدّث مسار `start-erpnext.ps1` داخل الملف إذا اختلف عن المسار الافتراضي.
 
-<div>
-	<a href="https://erpnext-demo.frappe.cloud/app/home" target="_blank" rel="noopener noreferrer">
-		<picture>
-			<source media="(prefers-color-scheme: dark)" srcset="https://frappe.io/files/try-on-fc-white.png">
-			<img src="https://frappe.io/files/try-on-fc-black.png" alt="Try on Frappe Cloud" height="28" />
-		</picture>
-	</a>
-</div>
-
-
-### Self-Hosted
-#### Docker
-
-See [Frappe Docker Documentation](https://github.com/frappe/frappe_docker) for full documentation & FAQ on Docker setup
-
-#### Prerequisites
-
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose v2](https://docs.docker.com/compose/)
-- [git](https://docs.github.com/en/get-started/getting-started-with-git/set-up-git)
-
-> For Docker basics and best practices refer to Docker's [documentation](https://docs.docker.com)
-
-### Try on your environment
-
-> **⚠️ Disposable demo only**
->
-> **This setup is intended for quick evaluation. Expect to throw the environment away.** You will not be able to install custom apps to this setup. For production deployments, custom configurations, and detailed explanations, see the full documentation.
-
-First clone the repo:
+### الطريقة الثانية: يدوياً عبر Docker Compose
 
 ```sh
-git clone https://github.com/frappe/frappe_docker
 cd frappe_docker
+docker compose -f pwd.yml up -d
+docker compose -f pwd.yml logs -f create-site
 ```
 
-Then run:
+> يستغرق إنشاء الموقع في المرة الأولى (`create-site`) عادةً من **2 إلى 5 دقائق** قبل أن تصبح الواجهة متاحة.
+
+### بيانات الدخول الافتراضية للبيئة المحلية
+
+| البند | القيمة |
+| :--- | :--- |
+| **الرابط المحلي** | `http://localhost:8080` |
+| **اسم الموقع (`Site`)** | `frontend` |
+| **اسم المستخدم** | `Administrator` |
+| **كلمة المرور** | `admin` |
+| **صور Docker المستخدمة** | `frappe/erpnext:v16.60.0` · `mariadb:11.8` · `redis:6.2-alpine` |
+
+---
+
+## تشغيل سكريبتات البيانات التجريبية (Seed Data)
+
+بعد تشغيل النظام وإتمام معالج الإعداد الأولي (`Setup Wizard`) للشركة، يمكنك تعبئة الموقع ببيانات جاهزة عبر نسخ السكريبت داخل حاوية `backend` وتنفيذه بمفسّر بايثون الخاص بـ Bench.
+
+> **ملاحظة مهمة:** السكريبتان مضبوطان افتراضياً على القيم:
+> `SITE = "frontend"` · `COMPANY = "Fares-Test-company"` · `CURRENCY = "EGP"`
+> تأكد من إنشاء هذه الشركة أثناء الـ Setup Wizard، أو عدّل الثوابت في أعلى السكريبت قبل تشغيله لتطابق اسم شركتك وعملتك.
+
+### 1. البيانات التجريبية العامة (`seed_demo_data.py`)
+
+ينشئ موردين وعملاء وأصنافاً، وعروض أسعار وأوامر بيع وشراء، وفواتير وسندات قبض وصرف، وعملاء محتملين (`Leads`)، ومشروعاً مع مهام مرتبطة.
+
+```powershell
+docker compose -f frappe_docker/pwd.yml cp seed_demo_data.py backend:/tmp/seed_demo_data.py
+docker compose -f frappe_docker/pwd.yml exec backend /home/frappe/frappe-bench/env/bin/python /tmp/seed_demo_data.py
+```
+
+### 2. نموذج مصنع الأجهزة المنزلية (`seed_appliance_factory.py`)
+
+ينشئ دورة تصنيع كاملة لمصنع بوتاجازات وثلاجات: مخازن (`Raw Materials`, `Work In Progress`, `Finished Goods`, `Scrap Warehouse`)، قوائم مواد متعددة المستويات (`BOM`)، أوامر تصنيع (`Work Orders`) مكتملة وقيد التشغيل، قيد هالك الصاج (`Scrap`)، وتسليم للتجار بالأرقام التسلسلية (`Serial No`) مع تفعيل الضمان وفاتورة المبيعات.
+
+```powershell
+docker compose -f frappe_docker/pwd.yml cp seed_appliance_factory.py backend:/tmp/seed_appliance_factory.py
+docker compose -f frappe_docker/pwd.yml exec backend /home/frappe/frappe-bench/env/bin/python /tmp/seed_appliance_factory.py
+```
+
+---
+
+## أوامر إدارة Docker المفيدة
+
+تُنفَّذ هذه الأوامر من داخل مجلد `frappe_docker` (أو بإضافة `-f frappe_docker/pwd.yml` من جذر المشروع):
 
 ```sh
-docker compose -f pwd.yml up -d
+# عرض حالة الحاويات
+docker compose -f pwd.yml ps
+
+# متابعة السجلات الحية
+docker compose -f pwd.yml logs -f backend
+
+# إيقاف الحاويات مؤقتاً مع الاحتفاظ بالبيانات
+docker compose -f pwd.yml stop
+
+# إيقاف وإزالة الحاويات فقط (تبقى قاعدة البيانات والملفات)
+docker compose -f pwd.yml down
 ```
-Wait for a couple of minutes for ERPNext site to be created or check the `create-site` container logs before opening browser on port `8080`. (username: `Administrator`, password: `admin`)
 
-See [Frappe Docker](https://github.com/frappe/frappe_docker/blob/main/docs/01-getting-started/03-arm64.md) for ARM based docker setup
+> ⚠️ **تحذير:** تشغيل `docker compose -f pwd.yml down -v` يحذف الـ Volumes بالكامل بما فيها قاعدة بيانات MariaDB وملفات الموقع.
 
+---
 
-## Development Setup
-### Manual Install
+## التوثيق والأدلة المرفقة
 
-The Easy Way: our install script for bench will install all dependencies (e.g. MariaDB). See https://github.com/frappe/bench for more details.
+- **[SYSTEM_OVERVIEW.md](./SYSTEM_OVERVIEW.md):** الدليل التعريفي الشامل لنظام ERPNext؛ يوضح الهيكل العام، القطاعات المدعومة، خريطة ترابط الأقسام الـ 12، وأهم العمليات والتقارير ومؤشرات الأداء لكل إدارة.
+- **[FACTORY_DISCOVERY_CHECKLIST.md](./FACTORY_DISCOVERY_CHECKLIST.md):** خارطة التحليل والتنفيذ لمصنع بوتاجازات وثلاجات؛ تتضمن قائمة أسئلة الـ Discovery مع العميل، مصفوفة اختيار أداة التعديل المناسبة، وخطة التنفيذ على 4 مراحل.
 
-New passwords will be created for the ERPNext "Administrator" user, the MariaDB root user, and the Frappe user (the script displays the passwords and saves them to ~/frappe_passwords.txt).
+---
 
+## ملاحظة مهمة للتخصيص والتطوير
 
-### Local
-
-To setup the repository locally follow the steps mentioned below:
-
-1. Setup bench by following the [Installation Steps](https://frappeframework.com/docs/user/en/installation) and start the server
-   ```
-   bench start
-   ```
-
-2. In a separate terminal window, run the following commands:
-   ```
-   # Create a new site
-   bench new-site erpnext.localhost
-   ```
-
-3. Get the ERPNext app and install it
-   ```
-   # Get the ERPNext app
-   bench get-app https://github.com/frappe/erpnext
-
-   # Install the app
-   bench --site erpnext.localhost install-app erpnext
-   ```
-
-4. Open the URL `http://erpnext.localhost:8000/app` in your browser, you should see the app running
-
-## Learning and Community
-
-1. [Frappe School](https://school.frappe.io) - Learn Frappe Framework and ERPNext from the various courses by the maintainers or from the community.
-2. [Official documentation](https://docs.erpnext.com/) - Extensive documentation for ERPNext.
-3. [Discussion Forum](https://discuss.frappe.io/c/erpnext/6) - Engage with the community of ERPNext users and service providers.
-4. [Telegram Group](https://erpnext_public.t.me) - Get instant help from huge community of users.
-
-
-## Contributing
-
-1. [Issue Guidelines](https://github.com/frappe/erpnext/wiki/Issue-Guidelines)
-2. [Report Security Vulnerabilities](https://erpnext.com/security)
-3. [Pull Request Requirements](https://github.com/frappe/erpnext/wiki/Contribution-Guidelines)
-4. [Translations](https://crowdin.com/project/frappe)
-
-
-## Logo and Trademark Policy
-
-Please read our [Logo and Trademark Policy](TRADEMARK_POLICY.md).
-
-<br />
-<br />
-<div align="center" style="padding-top: 0.75rem;">
-	<a href="https://frappe.io" target="_blank">
-		<picture>
-			<source media="(prefers-color-scheme: dark)" srcset="https://frappe.io/files/Frappe-white.png">
-			<img src="https://frappe.io/files/Frappe-black.png" alt="Frappe Technologies" height="28"/>
-		</picture>
-	</a>
-</div>
+> [!IMPORTANT]
+> **لا تعدّل ملفات نواة `erpnext/` مباشرة.**
+> عند تنفيذ متطلبات إضافية للعملاء، استخدم الأدوات الرسمية لضمان استقرار الحسابات وسهولة التحديث مستقبلاً:
+> - **تخصيص الشاشات والحقول:** `Workspaces` و`Customize Form` و`Custom Field`
+> - **المستندات والطباعة:** `Print Format` (HTML/Jinja)
+> - **الاعتمادات والأتمتة:** `Workflow` و`Client Script` و`Server Script`
+> - **التكاملات الخارجية والمنطق المتقدم:** إنشاء **`Custom Frappe App`** منفصل (كما هو موضح في [مصفوفة التعديلات](./FACTORY_DISCOVERY_CHECKLIST.md)).
