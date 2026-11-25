@@ -1,0 +1,146 @@
+# Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
+# License: GNU General Public License v3. See license.txt"
+
+
+import frappe
+from frappe.defaults import get_user_default
+from frappe.utils import cint
+
+import erpnext.accounts.utils
+from erpnext.stock.doctype.price_list.price_list import is_price_list_enabled
+
+BOOT_COMPANY_FIELDS = (
+	"name",
+	"default_currency",
+	"country",
+	"default_letter_head",
+	"default_letter_head_report",
+	"enable_perpetual_inventory",
+)
+READABLE_COMPANY_FIELDS = (
+	"name",
+	"cost_center",
+	"default_selling_terms",
+	"default_buying_terms",
+	"default_bank_account",
+	"exchange_gain_loss_account",
+	"bank_charges_account",
+)
+
+
+def boot_session(bootinfo):
+	"""boot session - send website info if guest"""
+
+	if frappe.session["user"] != "Guest":
+		update_page_info(bootinfo)
+
+		bootinfo.sysdefaults.territory = frappe.get_single_value("Selling Settings", "territory")
+		bootinfo.sysdefaults.customer_group = frappe.get_single_value("Selling Settings", "customer_group")
+		bootinfo.sysdefaults.use_legacy_js_reactivity = cint(
+			frappe.get_single_value("Selling Settings", "use_legacy_js_reactivity")
+		)
+		bootinfo.sysdefaults.allow_stale = cint(frappe.get_single_value("Accounts Settings", "allow_stale"))
+		bootinfo.sysdefaults.bill_for_rejected_quantity_in_purchase_invoice = cint(
+			frappe.get_single_value("Buying Settings", "bill_for_rejected_quantity_in_purchase_invoice")
+		)
+		bootinfo.sysdefaults.set_valuation_rate_for_rejected_materials = cint(
+			frappe.get_single_value("Buying Settings", "set_valuation_rate_for_rejected_materials")
+		)
+		bootinfo.sysdefaults.over_billing_allowance = frappe.get_single_value(
+			"Accounts Settings", "over_billing_allowance"
+		)
+		bootinfo.sysdefaults.disable_include_dimensions = cint(
+			frappe.get_single_value("Accounts Settings", "disable_include_dimensions")
+		)
+		bootinfo.sysdefaults.disable_serial_no_and_batch_selector = cint(
+			frappe.get_single_value("Stock Settings", "disable_serial_no_and_batch_selector")
+		)
+		bootinfo.sysdefaults.use_inline_serial_batch_editor = cint(
+			frappe.get_single_value("Stock Settings", "use_inline_serial_batch_editor")
+		)
+		bootinfo.sysdefaults.pick_serial_and_batch_based_on = frappe.get_single_value(
+			"Stock Settings", "pick_serial_and_batch_based_on"
+		)
+
+		remove_disabled_price_list_defaults(bootinfo)
+
+		bootinfo.sysdefaults.quotation_valid_till = max(
+			cint(frappe.db.get_single_value("CRM Settings", "default_valid_till")), 0
+		)
+
+		bootinfo.sysdefaults.allow_sales_order_creation_for_expired_quotation = cint(
+			frappe.get_single_value("Selling Settings", "allow_sales_order_creation_for_expired_quotation")
+		)
+
+		bootinfo.docs += get_boot_companies()
+
+		party_account_types = frappe.get_all("Party Type", fields=["name", "account_type"], as_list=True)
+		bootinfo.party_account_types = frappe._dict(
+			(name, account_type or "") for name, account_type in party_account_types
+		)
+		fiscal_year = erpnext.accounts.utils.get_fiscal_years(
+			frappe.utils.nowdate(), company=get_user_default("company"), raise_on_missing=False
+		)
+		if fiscal_year:
+			bootinfo.current_fiscal_year = fiscal_year[0]
+
+		bootinfo.sysdefaults.demo_company = frappe.db.get_single_value("Global Defaults", "demo_company")
+		bootinfo.sysdefaults.default_ageing_range = frappe.db.get_single_value(
+			"Accounts Settings", "default_ageing_range"
+		)
+		bootinfo.sysdefaults.repost_allowed_doctypes = frappe.get_hooks("repost_allowed_doctypes")
+
+
+def get_boot_companies():
+	# every company is listed (currency is needed client-side); ledger defaults only where readable
+	companies = frappe.get_all("Company", fields=list(BOOT_COMPANY_FIELDS), limit_page_length=0)
+	readable_defaults = get_readable_company_defaults()
+
+	for company in companies:
+		company.update(readable_defaults.get(company.name, {}))
+		company.doctype = ":Company"
+
+	return companies
+
+
+def get_readable_company_defaults():
+	if not frappe.has_permission("Company", "read"):
+		return {}
+
+	companies = frappe.get_list("Company", fields=list(READABLE_COMPANY_FIELDS), limit_page_length=0)
+	return {company.name: company for company in companies}
+
+
+def remove_disabled_price_list_defaults(bootinfo):
+	user_defaults = (bootinfo.user or {}).get("defaults") or {}
+
+	for key in ("selling_price_list", "buying_price_list"):
+		price_list = bootinfo.sysdefaults.get(key) or user_defaults.get(key)
+		if not isinstance(price_list, str) or is_price_list_enabled(price_list):
+			continue
+
+		bootinfo.sysdefaults.pop(key, None)
+		user_defaults.pop(key, None)
+
+
+def update_page_info(bootinfo):
+	bootinfo.page_info.update(
+		{
+			"Chart of Accounts": {"title": "Chart of Accounts", "route": "Tree/Account"},
+			"Chart of Cost Centers": {"title": "Chart of Cost Centers", "route": "Tree/Cost Center"},
+			"Item Group Tree": {"title": "Item Group Tree", "route": "Tree/Item Group"},
+			"Customer Group Tree": {"title": "Customer Group Tree", "route": "Tree/Customer Group"},
+			"Territory Tree": {"title": "Territory Tree", "route": "Tree/Territory"},
+			"Sales Person Tree": {"title": "Sales Person Tree", "route": "Tree/Sales Person"},
+		}
+	)
+
+
+def bootinfo(bootinfo):
+	if bootinfo.get("user") and bootinfo["user"].get("name"):
+		bootinfo["user"]["employee"] = ""
+		frappe.session.data.employee = ""
+		employee = frappe.db.get_value("Employee", {"user_id": bootinfo["user"]["name"]}, "name")
+		if employee:
+			bootinfo["user"]["employee"] = employee
+			frappe.session.data.employee = employee
