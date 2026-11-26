@@ -1,35 +1,56 @@
 <div align="center">
-  <img src="./erpnext/public/images/v16/erpnext.svg" alt="ERPNext Logo" height="80" width="80" />
-  <h1>نظام إدارة موارد المؤسسة (ERPNext)</h1>
-  <p>بيئة العمل الكاملة لتشغيل وتخصيص وتجربة <strong>ERPNext v16</strong> محلياً عبر Docker مع سكريبتات البيانات التجريبية وأدلة التحليل والتنفيذ.</p>
+  <h1>Digitbox Manufacturing ERP</h1>
+  <p><strong>حل متكامل لتخطيط موارد المصانع والشركات الصناعية</strong> — مُعدّ ومُخصّص ومُسلّم بواسطة شركة <a href="https://digitbox.tech"><strong>Digitbox</strong></a></p>
+  <p>مبني على منصة <strong>ERPNext v16</strong> مفتوحة المصدر بترخيص <code>GNU GPL v3</code></p>
+
+  <p>
+    <a href="https://digitbox.tech"><img src="https://img.shields.io/badge/Delivered%20by-Digitbox-0F172A?style=flat-square" alt="Delivered by Digitbox" /></a>
+    <a href="https://github.com/frappe/erpnext"><img src="https://img.shields.io/badge/Powered%20by-ERPNext%20v16-0089FF?style=flat-square" alt="Powered by ERPNext v16" /></a>
+    <a href="./license.txt"><img src="https://img.shields.io/badge/License-GNU%20GPL%20v3-green?style=flat-square" alt="License GNU GPL v3" /></a>
+    <a href="./frappe_docker/pwd.yml"><img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square" alt="Docker Ready" /></a>
+  </p>
 </div>
 
 ---
 
-## نبذة عن المشروع
+## نبذة عن الحل ودور شركة Digitbox
 
-يضم هذا المستودع بيئة متكاملة لتشغيل نظام **ERPNext** محلياً وتجهيزه للعرض أو التحليل والتنفيذ الفعلي، ويشمل:
+يمثّل هذا المستودع حزمة التشغيل والتسليم الخاصة بشركة **[Digitbox](https://digitbox.tech)** لتطبيق نظام تخطيط موارد المؤسسة (**ERP**) في قطاع المصانع (وعلى وجه الخصوص مصانع الأجهزة المنزلية والقطاعات الصناعية والتجارية المرتبطة بها).
 
-- **نواة النظام (`erpnext/`):** الكود المصدري لـ ERPNext مع واجهات `islands/` وتطبيق/ملفات `banking/`.
-- **بيئة التشغيل الجاهزة (`frappe_docker/`):** ملفات Docker Compose لتشغيل الموقع وقاعدة البيانات وRedis محلياً بدون إعداد يدوي معقد.
-- **سكريبتات تشغيل سريعة لنظام ويندوز:** لتشغيل Docker Desktop وسحب الصور وتشغيل الحاويات والتحقق من جاهزية الموقع تلقائياً.
-- **سكريبتات تعبئة البيانات التجريبية (`Seed Data`):** لإنشاء دورات عمل كاملة جاهزة للعرض أو لاختبار دورة تصنيع مصنع أجهزة منزلية (بوتاجازات وثلاجات).
-- **أدلة عمل عربية متكاملة:** شرح أقسام النظام من منظور الأعمال، وخارطة التحليل والتنفيذ لمصانع الأجهزة المنزلية.
+تعتمد فلسفة التسليم في **Digitbox** على الشفافية الكاملة واستقلالية العميل عبر طبقتين متكاملتين:
+
+1. **القيمة المضافة والتسليم من شركة Digitbox:**
+   - تجهيز بيئة تشغيل محلية فورية عبر Docker (`frappe_docker/pwd.yml`) وسكريبتات تشغيل مخصصة لويندوز.
+   - بناء نماذج محاكاة عملية جاهزة للتجربة والعرض (`Seed Data`)، تشمل دورة تصنيع كاملة لمصنع بوتاجازات وثلاجات (المخازن، قوائم المواد متعددة المستويات `BOM`، أوامر التشغيل، الهالك، الأرقام التسلسلية، والضمان).
+   - توفير أدلة تحليل وتنفيذ عربية شاملة تُستخدم في جلسات جمع المتطلبات (`Discovery`) وتدريب فرق العمل والتسليم الرسمي.
+   - التخصيص الهندسي والمحاسبي، والربط مع الأنظمة الخارجية (مثل الفاتورة الإلكترونية أو خطوط الإنتاج)، والدعم الفني وفق منهجية تحافظ على استقرار النظام وقابليته للتحديث.
+
+2. **النواة مفتوحة المصدر (`Powered by ERPNext & Frappe`):**
+   - يرتكز النظام على منصة **ERPNext v16** وإطار العمل **Frappe Framework** الموزّعَين بموجب رخصة البرمجيات الحرة **`GNU GPL v3`**.
+   - تمنح هذه البنية العميل حرية كاملة دون احتكار (`No Vendor Lock-in`)، مع امتلاك الكود المصدري وقابلية التوسع والترقية المستمرة.
 
 ---
 
 ## محتويات المستودع (هيكل المشروع)
 
+### أولاً: تجهيزات وأدوات شركة Digitbox
+
 | الملف / المجلد | الوصف |
 | :--- | :--- |
-| [`start-erpnext.ps1`](./start-erpnext.ps1) | سكريبت PowerShell لتشغيل Docker Desktop وسحب الصور وبدء الحاويات والتحقق من `http://localhost:8080`. |
+| [`start-erpnext.ps1`](./start-erpnext.ps1) | سكريبت PowerShell لتشغيل Docker Desktop وسحب الصور وبدء الحاويات والتحقق من جاهزية الموقع على `http://localhost:8080`. |
 | [`run-erpnext-window.cmd`](./run-erpnext-window.cmd) | ملف تشغيل سريع لنظام ويندوز يفتح نافذة PowerShell لتنفيذ `start-erpnext.ps1`. |
-| [`frappe_docker/pwd.yml`](./frappe_docker/pwd.yml) | ملف `Docker Compose` المحلي لتشغيل خدمات ERPNext (`backend`, `frontend`, `db`, `redis`, `websocket`, وغيرها). |
-| [`seed_demo_data.py`](./seed_demo_data.py) | سكريبت إنشاء بيانات تجريبية عامة (موردون، عملاء، أصناف، دورة بيع وشراء، مدفوعات، CRM، ومشروع ومهام). |
-| [`seed_appliance_factory.py`](./seed_appliance_factory.py) | سكريبت محاكاة دورة تصنيع كاملة لمصنع بوتاجازات وثلاجات (مخازن، قوائم مواد BOM، أوامر تشغيل، هالك، تسليم بالسيريال، وضمان). |
-| [`SYSTEM_OVERVIEW.md`](./SYSTEM_OVERVIEW.md) | الدليل التعريفي الشامل لأقسام ووحدات النظام الـ 12 ورحلات العمل المتكاملة باللغة العربية. |
-| [`FACTORY_DISCOVERY_CHECKLIST.md`](./FACTORY_DISCOVERY_CHECKLIST.md) | دليل التحليل (`Discovery Checklist`) ومصفوفة التعديلات وخطة التنفيذ لمصنع البوتاجازات والثلاجات. |
-| `erpnext/` / `banking/` / `islands/` | الكود المصدري الأساسي لوحدات ERPNext وواجهات المشاريع والربط البنكي. |
+| [`frappe_docker/pwd.yml`](./frappe_docker/pwd.yml) | إعداد Docker Compose المجهّز للتشغيل المحلي (`backend`, `frontend`, `db`, `redis`, `websocket`, وغيرها). |
+| [`seed_demo_data.py`](./seed_demo_data.py) | سكريبت تعبئة بيانات تجريبية عامة (موردون، عملاء، أصناف، دورة بيع وشراء، مدفوعات، CRM، ومشروع ومهام). |
+| [`seed_appliance_factory.py`](./seed_appliance_factory.py) | سكريبت محاكاة دورة تصنيع كاملة لمصنع بوتاجازات وثلاجات (مخازن الخامات/WIP/المنتج التام/الهالك، `BOM`، أوامر تشغيل، تسليم بالسيريال، وضمان). |
+| [`SYSTEM_OVERVIEW.md`](./SYSTEM_OVERVIEW.md) | الدليل التعريفي الشامل لوحدات النظام الـ 12 ورحلات العمل المتكاملة باللغة العربية. |
+| [`FACTORY_DISCOVERY_CHECKLIST.md`](./FACTORY_DISCOVERY_CHECKLIST.md) | دليل التحليل (`Discovery Checklist`) ومصفوفة التعديلات وخطة التنفيذ المرحلية لمصنع البوتاجازات والثلاجات. |
+
+### ثانياً: النواة مفتوحة المصدر
+
+| المجلد | الوصف |
+| :--- | :--- |
+| `erpnext/` | الكود المصدري الأساسي لتطبيق ERPNext v16 مفتوح المصدر (المحاسبة، المخازن، المشتريات، المبيعات، التصنيع، الجودة، الأصول، المشاريع، والدعم). |
+| `banking/` & `islands/` | مكونات وواجهات التكامل البنكي ولوحات متابعة المشاريع المضمنة في الحزمة. |
 
 ---
 
@@ -132,17 +153,31 @@ docker compose -f pwd.yml down
 
 ## التوثيق والأدلة المرفقة
 
-- **[SYSTEM_OVERVIEW.md](./SYSTEM_OVERVIEW.md):** الدليل التعريفي الشامل لنظام ERPNext؛ يوضح الهيكل العام، القطاعات المدعومة، خريطة ترابط الأقسام الـ 12، وأهم العمليات والتقارير ومؤشرات الأداء لكل إدارة.
+- **[SYSTEM_OVERVIEW.md](./SYSTEM_OVERVIEW.md):** الدليل التعريفي الشامل لنظام ERP؛ يوضح الهيكل العام، القطاعات المدعومة، خريطة ترابط الأقسام الـ 12، وأهم العمليات والتقارير ومؤشرات الأداء لكل إدارة.
 - **[FACTORY_DISCOVERY_CHECKLIST.md](./FACTORY_DISCOVERY_CHECKLIST.md):** خارطة التحليل والتنفيذ لمصنع بوتاجازات وثلاجات؛ تتضمن قائمة أسئلة الـ Discovery مع العميل، مصفوفة اختيار أداة التعديل المناسبة، وخطة التنفيذ على 4 مراحل.
 
 ---
 
-## ملاحظة مهمة للتخصيص والتطوير
+## منهجية Digitbox في التخصيص والتطوير
 
 > [!IMPORTANT]
 > **لا تعدّل ملفات نواة `erpnext/` مباشرة.**
-> عند تنفيذ متطلبات إضافية للعملاء، استخدم الأدوات الرسمية لضمان استقرار الحسابات وسهولة التحديث مستقبلاً:
+> عند تنفيذ متطلبات إضافية للمصانع أو العملاء، تتبع **Digitbox** الأدوات الرسمية لضمان استقرار الحسابات وسهولة التحديث والترقية مستقبلاً:
 > - **تخصيص الشاشات والحقول:** `Workspaces` و`Customize Form` و`Custom Field`
 > - **المستندات والطباعة:** `Print Format` (HTML/Jinja)
 > - **الاعتمادات والأتمتة:** `Workflow` و`Client Script` و`Server Script`
 > - **التكاملات الخارجية والمنطق المتقدم:** إنشاء **`Custom Frappe App`** منفصل (كما هو موضح في [مصفوفة التعديلات](./FACTORY_DISCOVERY_CHECKLIST.md)).
+
+---
+
+## الترخيص والإسناد مفتوح المصدر (License & Attribution)
+
+- يعتمد هذا الحل على نظام **[ERPNext](https://github.com/frappe/erpnext)** وإطار العمل **[Frappe Framework](https://github.com/frappe/frappe)**، وكلاهما برمجيات مفتوحة المصدر مرخّصة بموجب رخصة **`GNU General Public License v3.0 (GPL-3.0)`** (انظر [`license.txt`](./license.txt) و[`attributions.md`](./attributions.md)).
+- اسم **ERPNext** وشعاره هما علامتان تجاريتان مسجلتان لشركة **Frappe Technologies Pvt. Ltd.** (انظر [`TRADEMARK_POLICY.md`](./TRADEMARK_POLICY.md)).
+- شركة **Digitbox** ([digitbox.tech](https://digitbox.tech)) هي شركة تنفيذ وتخصيص وتسليم مستقلة، ويُذكر اسم **ERPNext** هنا للإشارة إلى المنصة مفتوحة المصدر التي يقوم عليها النظام دون أي ادعاء بالملكية الحصرية للنواة أو بالارتباط الرسمي بشركة Frappe Technologies.
+
+---
+
+<div align="center">
+  <p>تم التجهيز والتوثيق للتسليم بواسطة <strong>Digitbox</strong> · <a href="https://digitbox.tech">digitbox.tech</a></p>
+</div>
