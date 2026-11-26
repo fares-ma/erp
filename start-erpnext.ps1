@@ -1,3 +1,10 @@
+param(
+    [int]$Port = $(if ($env:ERPNEXT_PORT) { [int]$env:ERPNEXT_PORT } else { 8080 }),
+    [switch]$SeedDemo,
+    [switch]$SeedFactory,
+    [switch]$SeedAll
+)
+
 $ErrorActionPreference = "Stop"
 
 function Test-DockerDaemon {
@@ -67,6 +74,29 @@ if (-not (Test-Path $composeFile)) {
     exit 1
 }
 
+$env:ERPNEXT_PORT = "$Port"
+
+function Invoke-SeedScript {
+    param([string]$ScriptName)
+    $hostScript = Join-Path $PSScriptRoot $ScriptName
+    if (-not (Test-Path $hostScript)) {
+        Write-Error "Seed script '$hostScript' was not found."
+        exit 1
+    }
+    Write-Host ""
+    Write-Host "Running seed script: $ScriptName ..." -ForegroundColor Cyan
+    & docker compose -f pwd.yml cp $hostScript "backend:/tmp/$ScriptName"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Failed to copy '$ScriptName' into backend container (exit $LASTEXITCODE)."
+        exit $LASTEXITCODE
+    }
+    & docker compose -f pwd.yml exec -T backend /home/frappe/frappe-bench/env/bin/python "/tmp/$ScriptName"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Seed script '$ScriptName' failed with exit code $LASTEXITCODE."
+        exit $LASTEXITCODE
+    }
+}
+
 Push-Location $composeDir
 $prevErrPref = $ErrorActionPreference
 $ErrorActionPreference = "Continue"
@@ -93,7 +123,7 @@ try {
         }
     }
 
-    Write-Host "Starting ERPNext containers via docker compose -f pwd.yml up -d --pull never ..." -ForegroundColor Cyan
+    Write-Host "Starting ERPNext containers via docker compose -f pwd.yml up -d --pull never (port $Port) ..." -ForegroundColor Cyan
     & docker compose -f pwd.yml up -d --pull never
     if ($LASTEXITCODE -ne 0) {
         Write-Error "docker compose up failed with exit code $LASTEXITCODE."
@@ -108,12 +138,13 @@ try {
     Write-Host "Waiting for ERPNext site setup (create-site)..." -ForegroundColor Cyan
     & docker compose -f pwd.yml logs -f create-site
 
+    $pingUrl = "http://localhost:$Port/api/method/ping"
     Write-Host ""
-    Write-Host "Verifying http://localhost:8080/api/method/ping ..." -ForegroundColor Cyan
+    Write-Host "Verifying $pingUrl ..." -ForegroundColor Cyan
     $pingOk = $false
-    for ($p = 1; $p -le 6; $p++) {
+    for ($p = 1; $p -le 18; $p++) {
         try {
-            $resp = Invoke-WebRequest -Uri "http://localhost:8080/api/method/ping" -UseBasicParsing -TimeoutSec 15
+            $resp = Invoke-WebRequest -Uri $pingUrl -UseBasicParsing -TimeoutSec 15
             if ($resp.StatusCode -eq 200) {
                 Write-Host "ERPNext is LIVE! Response: $($resp.Content)" -ForegroundColor Green
                 $pingOk = $true
@@ -121,12 +152,27 @@ try {
             }
         }
         catch {
-            Write-Host "Waiting for web server ($p/6)..." -ForegroundColor DarkGray
+            Write-Host "Waiting for web server ($p/18)..." -ForegroundColor DarkGray
             Start-Sleep -Seconds 5
         }
     }
     if (-not $pingOk) {
-        Write-Warning "Containers are up, but http://localhost:8080 did not return 200 yet. Check 'docker compose -f pwd.yml ps -a'."
+        Write-Warning "Containers are up, but $pingUrl did not return 200 yet. Check 'docker compose -f pwd.yml ps -a'."
+    }
+
+    if ($SeedAll) {
+        Invoke-SeedScript "seed_demo_data.py"
+        Invoke-SeedScript "seed_appliance_factory.py"
+        Invoke-SeedScript "seed_factory_users_and_extras.py"
+    }
+    else {
+        if ($SeedDemo) {
+            Invoke-SeedScript "seed_demo_data.py"
+        }
+        if ($SeedFactory) {
+            Invoke-SeedScript "seed_appliance_factory.py"
+            Invoke-SeedScript "seed_factory_users_and_extras.py"
+        }
     }
 }
 finally {
@@ -135,9 +181,15 @@ finally {
 }
 
 Write-Host ""
-Write-Host "ERPNext containers started!" -ForegroundColor Green
+Write-Host "Digitbox Manufacturing ERP is ready!" -ForegroundColor Green
 Write-Host "  - First-time site creation (create-site) takes about 2-5 minutes."
 Write-Host "  - Watch progress: cd `"$composeDir`"; docker compose -f pwd.yml logs -f create-site"
-Write-Host "  - URL:         http://localhost:8080"
+Write-Host "  - URL:         http://localhost:$Port"
+Write-Host "  - Site:        frontend"
 Write-Host "  - Username:    Administrator"
 Write-Host "  - Password:    admin"
+if ($SeedAll -or $SeedFactory) {
+    Write-Host "  - Factory Demo Users (Password: Factory@2026):"
+    Write-Host "      gm@factory.local | stock@factory.local | production@factory.local"
+    Write-Host "      qc@factory.local | accounts@factory.local"
+}

@@ -15,13 +15,186 @@ from erpnext.selling.doctype.sales_order.sales_order import (
 from erpnext.stock.doctype.delivery_note.delivery_note import make_sales_invoice as make_si_from_dn
 from erpnext.stock.doctype.purchase_receipt.purchase_receipt import make_purchase_invoice
 
-SITE = "frontend"
-COMPANY = "Fares-Test-company"
-CURRENCY = "EGP"
-COST_CENTER = "Main - test"
-WH_STORES = "Stores - test"
-WH_FG = "Finished Goods - test"
-CASH_ACCOUNT = "Cash - test"
+SITE = os.environ.get("ERPNEXT_SITE", "frontend")
+
+
+def ensure_master_prereqs(company, currency):
+    if not frappe.db.exists("UOM", "Nos"):
+        frappe.get_doc({"doctype": "UOM", "uom_name": "Nos"}).insert(ignore_permissions=True)
+
+    root_territory = frappe.db.get_value("Territory", {"is_group": 1}, "name") or "All Territories"
+    if not frappe.db.exists("Territory", "Egypt"):
+        frappe.get_doc(
+            {"doctype": "Territory", "territory_name": "Egypt", "parent_territory": root_territory, "is_group": 0}
+        ).insert(ignore_permissions=True)
+
+    root_sup_group = frappe.db.get_value("Supplier Group", {"is_group": 1}, "name") or "All Supplier Groups"
+    for sg in ("Distributor", "Hardware", "Local"):
+        if not frappe.db.exists("Supplier Group", sg):
+            frappe.get_doc(
+                {"doctype": "Supplier Group", "supplier_group_name": sg, "parent_supplier_group": root_sup_group}
+            ).insert(ignore_permissions=True)
+
+    root_cust_group = frappe.db.get_value("Customer Group", {"is_group": 1}, "name") or "All Customer Groups"
+    for cg in ("Commercial", "Individual"):
+        if not frappe.db.exists("Customer Group", cg):
+            frappe.get_doc(
+                {"doctype": "Customer Group", "customer_group_name": cg, "parent_customer_group": root_cust_group}
+            ).insert(ignore_permissions=True)
+
+    root_item_group = frappe.db.get_value("Item Group", {"is_group": 1}, "name") or "All Item Groups"
+    for ig in ("Products", "Consumable", "Services"):
+        if not frappe.db.exists("Item Group", ig):
+            frappe.get_doc(
+                {"doctype": "Item Group", "item_group_name": ig, "parent_item_group": root_item_group}
+            ).insert(ignore_permissions=True)
+
+    for pl_name, buying, selling in (("Standard Buying", 1, 0), ("Standard Selling", 0, 1)):
+        if not frappe.db.exists("Price List", pl_name):
+            frappe.get_doc(
+                {
+                    "doctype": "Price List",
+                    "price_list_name": pl_name,
+                    "enabled": 1,
+                    "buying": buying,
+                    "selling": selling,
+                    "currency": currency,
+                }
+            ).insert(ignore_permissions=True)
+
+    if not frappe.db.exists("Mode of Payment", "Cash"):
+        frappe.get_doc({"doctype": "Mode of Payment", "mode_of_payment": "Cash", "type": "Cash"}).insert(
+            ignore_permissions=True
+        )
+
+    fy_exists = frappe.db.sql(
+        """
+        SELECT name FROM `tabFiscal Year`
+        WHERE disabled = 0 AND year_start_date <= '2026-10-01' AND year_end_date >= '2026-12-31'
+        LIMIT 1
+        """
+    )
+    if not fy_exists:
+        fy_name = "2026"
+        if frappe.db.exists("Fiscal Year", fy_name):
+            fy_doc = frappe.get_doc("Fiscal Year", fy_name)
+            fy_doc.disabled = 0
+            fy_doc.save(ignore_permissions=True)
+        else:
+            frappe.get_doc(
+                {
+                    "doctype": "Fiscal Year",
+                    "year": fy_name,
+                    "year_start_date": "2026-01-01",
+                    "year_end_date": "2026-12-31",
+                    "companies": [{"company": company}],
+                }
+            ).insert(ignore_permissions=True)
+
+
+def bootstrap_and_resolve_context():
+    env_company = os.environ.get("ERPNEXT_COMPANY")
+    company = None
+    if env_company and frappe.db.exists("Company", env_company):
+        company = env_company
+    if not company:
+        default_company = frappe.db.get_single_value("Global Defaults", "default_company")
+        if default_company and frappe.db.exists("Company", default_company):
+            company = default_company
+    if not company:
+        companies = frappe.get_all("Company", pluck="name", limit=1)
+        if companies:
+            company = companies[0]
+
+    if not company:
+        company_name = env_company or "Fares-Test-company"
+        company_abbr = os.environ.get("ERPNEXT_ABBR", "test")
+        currency = os.environ.get("ERPNEXT_CURRENCY", "EGP")
+        country = "Egypt" if frappe.db.exists("Country", "Egypt") else (frappe.get_all("Country", pluck="name", limit=1)[0])
+        setup_args = {
+            "country": country,
+            "timezone": "Africa/Cairo",
+            "language": "English",
+            "currency": currency,
+            "company_name": company_name,
+            "company_abbr": company_abbr,
+            "chart_of_accounts": "Standard",
+            "domain": "Manufacturing",
+            "fy_start_date": "2026-01-01",
+            "fy_end_date": "2026-12-31",
+            "full_name": "Administrator",
+            "email": "admin@example.com",
+            "password": "admin",
+        }
+        try:
+            from frappe.desk.page.setup_wizard.setup_wizard import setup_complete as desk_setup_complete
+
+            desk_setup_complete(setup_args)
+        except Exception:
+            from erpnext.setup.setup_wizard.setup_wizard import setup_complete as erpnext_setup_complete
+
+            erpnext_setup_complete(frappe._dict(setup_args))
+            frappe.db.set_single_value("System Settings", "setup_complete", 1)
+            frappe.db.commit()
+        company = frappe.db.get_value("Company", {"company_name": company_name}, "name") or company_name
+
+    abbr = frappe.db.get_value("Company", company, "abbr") or "test"
+    currency = frappe.db.get_value("Company", company, "default_currency") or os.environ.get("ERPNEXT_CURRENCY", "EGP")
+    ensure_master_prereqs(company, currency)
+
+    root_wh = (
+        frappe.db.get_value(
+            "Warehouse", {"company": company, "is_group": 1, "parent_warehouse": ["in", ["", None]]}, "name"
+        )
+        or frappe.db.get_value("Warehouse", {"company": company, "is_group": 1}, "name")
+        or f"All Warehouses - {abbr}"
+    )
+
+    def _ensure_wh(wh_name):
+        existing = frappe.db.get_value("Warehouse", {"warehouse_name": wh_name, "company": company}, "name")
+        if existing:
+            return existing
+        doc = frappe.get_doc(
+            {
+                "doctype": "Warehouse",
+                "warehouse_name": wh_name,
+                "parent_warehouse": root_wh,
+                "company": company,
+                "is_group": 0,
+            }
+        )
+        doc.insert(ignore_permissions=True)
+        return doc.name
+
+    wh_stores = _ensure_wh("Stores")
+    wh_fg = _ensure_wh("Finished Goods")
+    cost_center = (
+        frappe.db.get_value("Company", company, "cost_center")
+        or frappe.db.get_value("Cost Center", {"company": company, "is_group": 0}, "name")
+        or f"Main - {abbr}"
+    )
+    cash_account = (
+        frappe.db.get_value("Account", {"company": company, "account_type": "Cash", "is_group": 0}, "name")
+        or frappe.db.get_value("Account", {"company": company, "account_type": "Bank", "is_group": 0}, "name")
+        or f"Cash - {abbr}"
+    )
+    return {
+        "company": company,
+        "abbr": abbr,
+        "currency": currency,
+        "cost_center": cost_center,
+        "wh_stores": wh_stores,
+        "wh_fg": wh_fg,
+        "cash_account": cash_account,
+    }
+
+
+COMPANY = None
+CURRENCY = None
+COST_CENTER = None
+WH_STORES = None
+WH_FG = None
+CASH_ACCOUNT = None
 
 
 def ensure_supplier(name, supplier_group):
@@ -82,13 +255,14 @@ def ensure_item(code, item_name, item_group, is_stock_item, buy_rate=None, sell_
     if buy_rate is not None and not frappe.db.exists(
         "Item Price", {"item_code": code, "price_list": "Standard Buying"}
     ):
+        buying_currency = frappe.db.get_value("Price List", "Standard Buying", "currency") or CURRENCY
         frappe.get_doc(
             {
                 "doctype": "Item Price",
                 "item_code": code,
                 "price_list": "Standard Buying",
                 "buying": 1,
-                "currency": CURRENCY,
+                "currency": buying_currency,
                 "price_list_rate": buy_rate,
             }
         ).insert(ignore_permissions=True)
@@ -96,24 +270,34 @@ def ensure_item(code, item_name, item_group, is_stock_item, buy_rate=None, sell_
     if sell_rate is not None and not frappe.db.exists(
         "Item Price", {"item_code": code, "price_list": "Standard Selling"}
     ):
+        selling_currency = frappe.db.get_value("Price List", "Standard Selling", "currency") or CURRENCY
         frappe.get_doc(
             {
                 "doctype": "Item Price",
                 "item_code": code,
                 "price_list": "Standard Selling",
                 "selling": 1,
-                "currency": CURRENCY,
+                "currency": selling_currency,
                 "price_list_rate": sell_rate,
             }
         ).insert(ignore_permissions=True)
 
 
 def run_seed():
+    global COMPANY, CURRENCY, COST_CENTER, WH_STORES, WH_FG, CASH_ACCOUNT
     frappe.init(site=SITE)
     frappe.connect()
     frappe.set_user("Administrator")
 
     try:
+        ctx = bootstrap_and_resolve_context()
+        COMPANY = ctx["company"]
+        CURRENCY = ctx["currency"]
+        COST_CENTER = ctx["cost_center"]
+        WH_STORES = ctx["wh_stores"]
+        WH_FG = ctx["wh_fg"]
+        CASH_ACCOUNT = ctx["cash_account"]
+
         if frappe.db.exists("Item", "DEMO-LAPTOP-01"):
             print("ALREADY_SEEDED")
             return
