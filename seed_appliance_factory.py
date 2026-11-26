@@ -402,15 +402,6 @@ def execute_work_order(
         mins = int(jc.time_required or 30)
         start_hr = 10 + idx
         end_hr = start_hr + max(1, (mins + 59) // 60)
-        jc.append(
-            "time_logs",
-            {
-                "from_time": f"{transfer_date} {start_hr:02d}:00:00",
-                "to_time": f"{transfer_date} {end_hr:02d}:00:00",
-                "completed_qty": qty,
-            },
-        )
-
         if qc_item_code and "QC" in (jc.operation or ""):
             p1 = ensure_qc_param("Cooling Temp Reach (-18C)")
             p2 = ensure_qc_param("Gas & Refrigerant Leak Check")
@@ -436,8 +427,17 @@ def execute_work_order(
             qi.insert(ignore_permissions=True)
             qi.submit()
             qc_name = qi.name
+            jc.reload()
             jc.quality_inspection = qi.name
 
+        jc.append(
+            "time_logs",
+            {
+                "from_time": f"{transfer_date} {start_hr:02d}:00:00",
+                "to_time": f"{transfer_date} {end_hr:02d}:00:00",
+                "completed_qty": qty,
+            },
+        )
         jc.save(ignore_permissions=True)
         jc.submit()
         jc_names.append(jc.name)
