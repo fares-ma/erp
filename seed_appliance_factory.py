@@ -138,6 +138,15 @@ def bootstrap_and_resolve_context():
 
             desk_setup_complete(setup_args)
         except Exception:
+            frappe.db.rollback()
+
+        if not frappe.db.exists("Company", company_name) and not frappe.get_all("Company", limit=1):
+            try:
+                from frappe.desk.page.setup_wizard.install_fixtures import install as install_frappe_fixtures
+
+                install_frappe_fixtures(country)
+            except Exception:
+                pass
             from erpnext.setup.setup_wizard.setup_wizard import setup_complete as erpnext_setup_complete
 
             erpnext_setup_complete(frappe._dict(setup_args))

@@ -115,21 +115,14 @@
 
 ### الخطوة 1: استنساخ المستودع (`git clone`) على الجهاز أو السيرفر الجديد
 
-بما أن هذا المستودع **خاص (`Private`)** على GitHub، عند استنساخه على جهاز جديد أو سيرفر خارجي ستحتاج إلى المصادقة بإحدى الطرق التالية:
+انسخ المستودع مباشرة على أي جهاز أو سيرفر خارجي عبر الأمر التالي:
 
 ```bash
-# الطريقة أ: عبر رابط HTTPS مع Personal Access Token (PAT) أو إدخال بيانات GitHub
 git clone https://github.com/fares-ma/erp.git
-cd erp
-
-# الطريقة ب: إذا كان لديك GitHub CLI (gh) مثبّتاً على الجهاز/السيرفر
-gh auth login
-gh repo clone fares-ma/erp
 cd erp
 ```
 
-> **للمصادقة بـ PAT مباشرة في رابط HTTPS (مفيد على السيرفرات):**
-> أنشئ Token من GitHub عبر `Settings -> Developer settings -> Personal access tokens` بصلاحية `repo`، ثم استخدم:
+> **ملاحظة (في حال تحويل المستودع إلى `Private` لاحقاً):** يمكنك الاستنساخ باستخدام GitHub CLI (`gh auth login && gh repo clone fares-ma/erp`) أو عبر Personal Access Token بصلاحية `repo`:
 > `git clone https://<YOUR_GITHUB_TOKEN>@github.com/fares-ma/erp.git`
 
 ---
